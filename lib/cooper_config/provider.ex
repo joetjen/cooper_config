@@ -36,9 +36,23 @@ defmodule CooperConfig.Provider do
   through to `Cooper.load_file/2` -- see its moduledoc for what each
   one does:
 
-    * `:env` -- defaults to `Cooper.load_file/2`'s own default
-      (`System.get_env/0`) if omitted.
+    * `:env` -- an override layer, not a replacement: `System.get_env/0`
+      (and any `.env` file, see `:dotenv` below) is always consulted
+      too, for any name not given an explicit entry here. Defaults to
+      `Cooper.load_file/2`'s own default (nothing extra layered on top
+      of `System.get_env/0`/`.env`) if omitted.
     * `:resolvers`, `:tags`, `:import_schemes` -- default to `%{}`.
+    * `:dotenv`, `:dotenv_env`, `:dotenv_files` -- `.env` file layering,
+      on by default; see `Cooper.Dotenv` for the full rules. Omitted
+      here means Cooper's own default applies.
+
+  `:cache`/`:watch_env` are deliberately **not** exposed -- `load/2`
+  always calls `Cooper.load_file/2` with `cache: false`. `Config.Provider`
+  callbacks run before the release's own supervision tree starts, which
+  is also what starts `:cooper`'s OTP application and, with it, the
+  `Cooper.Cache` process the cache relies on -- caching here wouldn't
+  just be pointless for a file read exactly once per boot, it would
+  crash trying to reach a cache process that isn't running yet.
 
   Plus one option of its own:
 
@@ -63,9 +77,18 @@ defmodule CooperConfig.Provider do
           import_schemes: %{
             optional(String.t()) => (String.t() -> {:ok, String.t()} | {:error, term()})
           },
+          dotenv: boolean(),
+          dotenv_env: atom() | nil,
+          dotenv_files: [String.t()],
           reveal_secrets: boolean()
         ]
 
+  @doc """
+  Validates `opts` and builds the state `load/2` receives.
+
+  Raises if `:path` is missing or fails
+  `Config.Provider.validate_config_path!/1`.
+  """
   @impl true
   def init(opts) do
     path = Keyword.fetch!(opts, :path)
@@ -77,10 +100,20 @@ defmodule CooperConfig.Provider do
       resolvers: Keyword.get(opts, :resolvers, %{}),
       tags: Keyword.get(opts, :tags, %{}),
       import_schemes: Keyword.get(opts, :import_schemes, %{}),
+      dotenv: Keyword.get(opts, :dotenv),
+      dotenv_env: Keyword.get(opts, :dotenv_env),
+      dotenv_files: Keyword.get(opts, :dotenv_files),
       reveal_secrets: Keyword.get(opts, :reveal_secrets, true)
     }
   end
 
+  @doc """
+  Loads the CASC file described by `state` (as built by `init/1`) and
+  merges it into `config` via `Config.Reader.merge/2`.
+
+  Raises if the file can't be read, parsed, or resolved -- see the
+  moduledoc's "Errors" section.
+  """
   @impl true
   def load(config, state) do
     path = Config.Provider.resolve_config_path!(state.path)
@@ -90,9 +123,18 @@ defmodule CooperConfig.Provider do
         env: state.env,
         resolvers: state.resolvers,
         tags: state.tags,
-        import_schemes: state.import_schemes
+        import_schemes: state.import_schemes,
+        dotenv: state.dotenv,
+        dotenv_env: state.dotenv_env,
+        dotenv_files: state.dotenv_files
       ]
       |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+      # `Config.Provider` callbacks run before `:cooper`'s own OTP
+      # application -- and `Cooper.Cache`'s GenServer/ETS table -- has
+      # started (see the moduledoc's "Options" section), so caching
+      # here isn't just useless for a file read once per boot, it's a
+      # crash waiting to happen. Not user-overridable.
+      |> Keyword.put(:cache, false)
 
     case Cooper.load_file(path, cooper_opts) do
       {:ok, data} ->
@@ -102,12 +144,7 @@ defmodule CooperConfig.Provider do
         Config.Reader.merge(config, app_config)
 
       {:error, error} ->
-        raise "failed to load CASC config from #{inspect(path)}:\n\n#{format_error(error)}"
+        raise "failed to load CASC config from #{inspect(path)}:\n\n#{CooperConfig.format_error(error)}"
     end
   end
-
-  defp format_error(errors) when is_list(errors),
-    do: Enum.map_join(errors, "\n", &Ichor.Error.format/1)
-
-  defp format_error(error), do: Ichor.Error.format(error)
 end

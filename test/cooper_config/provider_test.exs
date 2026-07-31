@@ -23,6 +23,22 @@ defmodule CooperConfig.ProviderTest do
       assert %{resolvers: %{}, tags: %{}, import_schemes: %{}, reveal_secrets: true} =
                Provider.init(path: @fixture)
     end
+
+    test "defaults dotenv/dotenv_env/dotenv_files to nil (Cooper's own default applies)" do
+      assert %{dotenv: nil, dotenv_env: nil, dotenv_files: nil} = Provider.init(path: @fixture)
+    end
+
+    test "captures dotenv/dotenv_env/dotenv_files when given" do
+      state =
+        Provider.init(
+          path: @fixture,
+          dotenv: false,
+          dotenv_env: :prod,
+          dotenv_files: ["/etc/my_app/.env"]
+        )
+
+      assert %{dotenv: false, dotenv_env: :prod, dotenv_files: ["/etc/my_app/.env"]} = state
+    end
   end
 
   describe "load/2" do
@@ -58,6 +74,22 @@ defmodule CooperConfig.ProviderTest do
       assert_raise RuntimeError, ~r/failed to load CASC config/, fn ->
         Provider.load([], state)
       end
+    end
+
+    test "never populates Cooper's file cache, and ignores a :cache option if given" do
+      absolute = Path.expand(@fixture)
+      root = Path.dirname(absolute)
+      Cooper.Cache.invalidate(absolute)
+
+      state = Provider.init(path: @fixture, cache: true)
+      Provider.load([], state)
+
+      # `Config.Provider` callbacks run before `:cooper`'s own OTP
+      # application -- and `Cooper.Cache`'s GenServer/ETS table -- has
+      # started, so `load/2` always forces `cache: false` regardless of
+      # what's passed in; reaching for the cache here would crash in a
+      # real release boot, not just be pointless.
+      assert Cooper.Cache.fetch(absolute, root) == :miss
     end
   end
 end

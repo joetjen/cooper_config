@@ -58,7 +58,7 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      {:cooper, "~> 0.1.0"}
+      {:cooper, "~> 0.2.0"}
     ]
   end
 
@@ -104,6 +104,7 @@ defmodule CooperConfig.MixProject do
   defp groups_for_modules do
     [
       "Public API": [
+        CooperConfig,
         CooperConfig.Provider,
         CooperConfig.Convert
       ]
