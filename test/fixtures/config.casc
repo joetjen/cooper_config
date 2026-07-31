@@ -1,0 +1,6 @@
+#@version = 1.0
+
+my_app {
+  port = 4000
+  *password = "hunter2"
+}
