@@ -1,7 +1,7 @@
 defmodule CooperConfig.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.1.1"
 
   # `mix precommit` includes `test` as a step; without this, Mix runs
   # the whole alias chain (including `mix test`) in :dev, and `mix test`
@@ -58,7 +58,7 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      {:cooper, "~> 0.2.0"}
+      {:cooper, "~> 0.2"}
     ]
   end
 
