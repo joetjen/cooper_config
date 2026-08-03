@@ -58,7 +58,7 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      {:cooper, "~> 0.2.0"}
+      {:cooper, "~> 0.2"}
     ]
   end
 
