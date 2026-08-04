@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Docs are now also published to
+  [GitHub Pages](https://joetjen.github.io/cooper_config/) on every push to
+  `main` (`.github/workflows/docs.yml`), as an unreleased-changes preview
+  alongside the release docs on hexdocs.pm.
+
+### Changed
+
+- `mix.exs`'s `docs()` now sets `canonical: "https://hexdocs.pm/cooper_config"`,
+  so the GitHub Pages copy doesn't compete with hexdocs.pm as duplicate
+  content.
+
 ## [0.1.1] - 2026-08-03
 
 ### Changed

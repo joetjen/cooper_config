@@ -86,16 +86,25 @@ defmodule CooperConfig.MixProject do
   defp package do
     [
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/joetjen/cooper_config"},
+      links: %{
+        "GitHub" => "https://github.com/joetjen/cooper_config",
+        "Docs (main)" => "https://joetjen.github.io/cooper_config/"
+      },
       files: ~w(lib .formatter.exs mix.exs README.md CHANGELOG.md LICENSE)
     ]
   end
 
+  # `canonical` points search engines/ExDoc's own "View on hexdocs.pm"-style
+  # link at the released docs, since the same docs are also built on every
+  # push to main and published to GitHub Pages (.github/workflows/docs.yml)
+  # as an unreleased-changes preview -- without it the two copies would look
+  # like duplicate content, and one would fork as "canonical" arbitrarily.
   defp docs do
     [
       main: "readme",
       source_url: "https://github.com/joetjen/cooper_config",
       source_ref: "v#{@version}",
+      canonical: "https://hexdocs.pm/cooper_config",
       extras: ["README.md", "CHANGELOG.md", "LICENSE"],
       groups_for_modules: groups_for_modules()
     ]

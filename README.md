@@ -104,6 +104,12 @@ why that's safe here but not in `Provider`.
 
 ## Where to go next
 
+Links below go to [hexdocs.pm](https://hexdocs.pm/cooper_config), matching
+the latest release. For docs built from the tip of `main` (including
+unreleased changes), see the
+[GitHub Pages preview](https://joetjen.github.io/cooper_config/), published
+by [`docs.yml`](.github/workflows/docs.yml) on every push to `main`.
+
 - **[`CooperConfig.Provider`](https://hexdocs.pm/cooper_config/CooperConfig.Provider.html)**
   — the `Config.Provider`, full option list, and error behavior.
 - **[`CooperConfig.load!/2`](https://hexdocs.pm/cooper_config/CooperConfig.html#load!/2)**
