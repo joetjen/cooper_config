@@ -47,7 +47,8 @@ defmodule CooperConfig.Provider do
       here means Cooper's own default applies.
 
   `:cache`/`:watch_env` are deliberately **not** exposed -- `load/2`
-  always calls `Cooper.load_file/2` with `cache: false`. `Config.Provider`
+  always calls `Cooper.load_file/2` with `cache: false`, and passing
+  either one raises rather than being quietly disregarded. `Config.Provider`
   callbacks run before the release's own supervision tree starts, which
   is also what starts `:cooper`'s OTP application and, with it, the
   `Cooper.Cache` process the cache relies on -- caching here wouldn't
@@ -56,6 +57,10 @@ defmodule CooperConfig.Provider do
 
   Plus one option of its own:
 
+    * `:secret_module` -- passed to `CooperConfig.Convert.to_app_config/2`;
+      re-wraps each secret in a type you own rather than revealing it.
+      An atom, because these options are written into the release's
+      `sys.config`.
     * `:reveal_secrets` -- passed to `CooperConfig.Convert.to_app_config/2`,
       see its moduledoc for the tradeoff. Defaults to `true`.
 
@@ -80,17 +85,39 @@ defmodule CooperConfig.Provider do
           dotenv: boolean(),
           dotenv_env: atom() | nil,
           dotenv_files: [String.t()],
-          reveal_secrets: boolean()
+          reveal_secrets: boolean(),
+          secret_module: module() | nil
         ]
+
+  # Every option this provider understands. An option outside this set is
+  # almost always a typo or a version skew, and silently ignoring it is the
+  # worst possible outcome: passing `:secret_module` to a version that predates
+  # it left secrets revealed in a release with no warning anywhere.
+  @known_opts [
+    :path,
+    :env,
+    :resolvers,
+    :tags,
+    :import_schemes,
+    :dotenv,
+    :dotenv_env,
+    :dotenv_files,
+    :reveal_secrets,
+    :secret_module
+  ]
 
   @doc """
   Validates `opts` and builds the state `load/2` receives.
 
   Raises if `:path` is missing or fails
-  `Config.Provider.validate_config_path!/1`.
+  `Config.Provider.validate_config_path!/1`, or if `opts` contains a key this
+  provider does not understand -- a typo or a version that predates an option
+  would otherwise be ignored silently, and a provider that quietly does less
+  than you asked is worse than one that refuses to boot.
   """
   @impl true
   def init(opts) do
+    validate_opts!(opts)
     path = Keyword.fetch!(opts, :path)
     Config.Provider.validate_config_path!(path)
 
@@ -103,8 +130,25 @@ defmodule CooperConfig.Provider do
       dotenv: Keyword.get(opts, :dotenv),
       dotenv_env: Keyword.get(opts, :dotenv_env),
       dotenv_files: Keyword.get(opts, :dotenv_files),
-      reveal_secrets: Keyword.get(opts, :reveal_secrets, true)
+      reveal_secrets: Keyword.get(opts, :reveal_secrets, true),
+      secret_module: Keyword.get(opts, :secret_module)
     }
+  end
+
+  # Refuses any option outside `@known_opts`, naming the offender and what is
+  # accepted, since the likely cause is a typo or a dependency older than the
+  # option being passed.
+  defp validate_opts!(opts) do
+    case Keyword.keys(opts) -- @known_opts do
+      [] ->
+        :ok
+
+      unknown ->
+        raise ArgumentError,
+              "#{inspect(__MODULE__)} received unknown option(s): #{inspect(unknown)}. " <>
+                "Supported options: #{inspect(@known_opts)}. If one of these was added in a " <>
+                "newer cooper_config, check the version you have installed."
+    end
   end
 
   @doc """
@@ -139,7 +183,10 @@ defmodule CooperConfig.Provider do
     case Cooper.load_file(path, cooper_opts) do
       {:ok, data} ->
         app_config =
-          CooperConfig.Convert.to_app_config(data, reveal_secrets: state.reveal_secrets)
+          CooperConfig.Convert.to_app_config(data,
+            reveal_secrets: state.reveal_secrets,
+            secret_module: state.secret_module
+          )
 
         Config.Reader.merge(config, app_config)
 

@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-19
+
+### Changed
+
+- **BREAKING (behaviour):** `CooperConfig.Provider.init/1` and
+  `CooperConfig.load!/2` now raise `ArgumentError` on an option they do not
+  recognize, instead of ignoring it.
+
+  Neither this library nor Cooper rejected unknown keys, so a typo meant the
+  option simply did not happen. That was found the hard way: passing
+  `:secret_module` to a version predating it produced a release whose secrets
+  were revealed, with no warning anywhere. A provider that quietly does less
+  than you asked is worse than one that refuses to boot.
+
+  This also affects `:cache` and `:watch_env` on `Provider`, which were
+  previously accepted and disregarded — the provider always loads with
+  `cache: false`, because `Cooper.Cache`'s process has not started when a
+  provider runs. Passing either now raises rather than silently doing the
+  opposite of what was asked.
+
+  The accepted list is enumerated in each module, which couples it to Cooper's
+  own option set: an option added there needs adding here. That is deliberate —
+  raising on a valid-but-newer option is loud and immediately diagnosable, while
+  ignoring a security-relevant one is neither.
+
+### Added
+
+- `:secret_module`, accepted by `CooperConfig.Convert.to_app_config/2`,
+  `CooperConfig.load!/2` and `CooperConfig.Provider`. Each `Cooper.Secret` is
+  revealed and immediately re-wrapped as `secret_module.new(value)`.
+
+  This is for a codebase that already owns a secret type and does not want a
+  dependency's struct appearing in its own configuration contracts. It gets the
+  same accidental-leak protection as `reveal_secrets: false`, while consuming
+  code reveals through a type it controls.
+
+  It takes precedence over `:reveal_secrets`, so a caller that names its own
+  type cannot accidentally receive a plain string. It is a module rather than a
+  function because these options are written into a release's `sys.config`,
+  where an atom round-trips dependably and a captured function does not.
+
+  Defaults to `nil`, which leaves existing behaviour exactly as it was.
+
+- Docs are now also published to
+  [GitHub Pages](https://joetjen.github.io/cooper_config/) on every push to
+  `main` (`.github/workflows/docs.yml`), as an unreleased-changes preview
+  alongside the release docs on hexdocs.pm.
+
+### Changed
+
+- `mix.exs`'s `docs()` now sets `canonical: "https://hexdocs.pm/cooper_config"`,
+  so the GitHub Pages copy doesn't compete with hexdocs.pm as duplicate
+  content.
+
 ## [0.1.1] - 2026-08-03
 
 ### Changed

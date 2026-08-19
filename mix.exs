@@ -1,7 +1,7 @@
 defmodule CooperConfig.MixProject do
   use Mix.Project
 
-  @version "0.1.1"
+  @version "0.2.0"
 
   # `mix precommit` includes `test` as a step; without this, Mix runs
   # the whole alias chain (including `mix test`) in :dev, and `mix test`
@@ -58,7 +58,12 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      {:cooper, "~> 0.2"}
+      # `~> 0.3`, not `~> 0.2`: this library now validates option names against
+      # an enumerated list that includes `:dotenv_override`, which only exists
+      # from Cooper 0.3.0. Allowing an older Cooper would let it accept an
+      # option the installed Cooper silently ignores -- the exact failure this
+      # validation was added to prevent.
+      {:cooper, "~> 0.3"}
     ]
   end
 
@@ -86,16 +91,25 @@ defmodule CooperConfig.MixProject do
   defp package do
     [
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/joetjen/cooper_config"},
+      links: %{
+        "GitHub" => "https://github.com/joetjen/cooper_config",
+        "Docs (main)" => "https://joetjen.github.io/cooper_config/"
+      },
       files: ~w(lib .formatter.exs mix.exs README.md CHANGELOG.md LICENSE)
     ]
   end
 
+  # `canonical` points search engines/ExDoc's own "View on hexdocs.pm"-style
+  # link at the released docs, since the same docs are also built on every
+  # push to main and published to GitHub Pages (.github/workflows/docs.yml)
+  # as an unreleased-changes preview -- without it the two copies would look
+  # like duplicate content, and one would fork as "canonical" arbitrarily.
   defp docs do
     [
       main: "readme",
       source_url: "https://github.com/joetjen/cooper_config",
       source_ref: "v#{@version}",
+      canonical: "https://hexdocs.pm/cooper_config",
       extras: ["README.md", "CHANGELOG.md", "LICENSE"],
       groups_for_modules: groups_for_modules()
     ]

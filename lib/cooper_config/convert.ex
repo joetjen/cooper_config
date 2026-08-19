@@ -26,6 +26,18 @@ defmodule CooperConfig.Convert do
   drop-in compatibility for the same accidental-leak protection
   `Cooper` gives everywhere else.
 
+  `secret_module: SomeModule` is the third option: each secret is
+  revealed and immediately re-wrapped as `SomeModule.new(value)`. This
+  exists for a codebase that already owns a secret type and does not
+  want a dependency's struct in its configuration contracts -- it gets
+  the same leak protection as `reveal_secrets: false` while consuming
+  code reveals through a type it owns. It takes precedence over
+  `:reveal_secrets`.
+
+  It is deliberately a module rather than a function: these options are
+  written into a release's `sys.config`, where an atom round-trips and a
+  captured function is a much less comfortable bet.
+
   ## A note on atoms
 
   Every map key becomes an atom via `String.to_atom/1`, same posture as
@@ -36,7 +48,11 @@ defmodule CooperConfig.Convert do
 
   alias Cooper.Secret
 
-  @type opts :: [reveal_secrets: boolean()]
+  @type opts :: [reveal_secrets: boolean(), secret_module: module() | nil]
+
+  # How one `Cooper.Secret` is converted, resolved once from the options
+  # rather than re-derived at every node of the tree.
+  @typep secret_mode :: :reveal | :keep | {:wrap, module()}
 
   @doc """
   Converts `data` (a string-keyed map) into an app-config keyword list.
@@ -55,30 +71,53 @@ defmodule CooperConfig.Convert do
       ...> )
       [my_app: [password: %Cooper.Secret{value: "hunter2"}]]
 
+      iex> CooperConfig.Convert.to_app_config(
+      ...>   %{"my_app" => %{"password" => %Cooper.Secret{value: "hunter2"}}},
+      ...>   secret_module: CooperConfig.ConvertTest.OwnedSecret
+      ...> )
+      [my_app: [password: %CooperConfig.ConvertTest.OwnedSecret{value: "hunter2"}]]
+
   """
   @spec to_app_config(map(), opts()) :: keyword()
   def to_app_config(data, opts \\ []) when is_map(data) do
-    normalize(data, Keyword.get(opts, :reveal_secrets, true))
+    normalize(data, secret_mode(opts))
   end
 
-  defp normalize(%Secret{} = secret, true), do: normalize(Secret.reveal(secret), true)
-  defp normalize(%Secret{} = secret, false), do: secret
-  defp normalize(%_struct{} = value, _reveal_secrets?), do: value
-
-  defp normalize(value, reveal_secrets?) when is_map(value) do
-    Enum.map(value, fn {key, val} -> {String.to_atom(key), normalize(val, reveal_secrets?)} end)
+  # Resolves the three ways a secret can be converted into one value.
+  @spec secret_mode(opts()) :: secret_mode()
+  defp secret_mode(opts) do
+    case Keyword.get(opts, :secret_module) do
+      nil -> if Keyword.get(opts, :reveal_secrets, true), do: :reveal, else: :keep
+      module when is_atom(module) -> {:wrap, module}
+    end
   end
 
-  defp normalize(value, reveal_secrets?) when is_list(value) do
-    Enum.map(value, &normalize(&1, reveal_secrets?))
+  defp normalize(%Secret{} = secret, :reveal), do: normalize(Secret.reveal(secret), :reveal)
+  defp normalize(%Secret{} = secret, :keep), do: secret
+
+  defp normalize(%Secret{} = secret, {:wrap, module} = mode) do
+    # Revealed and immediately re-wrapped: the value itself still needs
+    # normalizing (a secret holding a map is unusual but not forbidden), and
+    # only then does it become the consumer's own type.
+    secret |> Secret.reveal() |> normalize(mode) |> module.new()
   end
 
-  defp normalize(value, reveal_secrets?) when is_tuple(value) do
+  defp normalize(%_struct{} = value, _mode), do: value
+
+  defp normalize(value, mode) when is_map(value) do
+    Enum.map(value, fn {key, val} -> {String.to_atom(key), normalize(val, mode)} end)
+  end
+
+  defp normalize(value, mode) when is_list(value) do
+    Enum.map(value, &normalize(&1, mode))
+  end
+
+  defp normalize(value, mode) when is_tuple(value) do
     value
     |> Tuple.to_list()
-    |> Enum.map(&normalize(&1, reveal_secrets?))
+    |> Enum.map(&normalize(&1, mode))
     |> List.to_tuple()
   end
 
-  defp normalize(value, _reveal_secrets?), do: value
+  defp normalize(value, _mode), do: value
 end
