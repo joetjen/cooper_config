@@ -58,7 +58,12 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      {:cooper, "~> 0.2"}
+      # `~> 0.3`, not `~> 0.2`: this library now validates option names against
+      # an enumerated list that includes `:dotenv_override`, which only exists
+      # from Cooper 0.3.0. Allowing an older Cooper would let it accept an
+      # option the installed Cooper silently ignores -- the exact failure this
+      # validation was added to prevent.
+      {:cooper, "~> 0.3"}
     ]
   end
 
