@@ -41,8 +41,37 @@ defmodule CooperConfig do
           dotenv_files: [String.t()],
           cache: boolean(),
           watch_env: boolean(),
-          reveal_secrets: boolean()
+          root: String.t(),
+          dotenv_override: boolean(),
+          reveal_secrets: boolean(),
+          secret_module: module() | nil
         ]
+
+  # This library's own options, plus every option it forwards to
+  # `Cooper.load_file/2`. Enumerated so a typo or an option from a newer
+  # version raises here instead of being silently dropped -- neither this
+  # library nor Cooper rejects an unknown key on its own, and a `:secret_module`
+  # that quietly does nothing leaves secrets revealed with no warning.
+  #
+  # This does couple the list to Cooper's option set: an option added there
+  # needs adding here too. That is deliberate. Raising on a valid-but-newer
+  # option is loud and immediately diagnosable; ignoring a security-relevant one
+  # is neither.
+  @known_opts [
+    :env,
+    :dotenv,
+    :dotenv_env,
+    :dotenv_files,
+    :dotenv_override,
+    :cache,
+    :watch_env,
+    :root,
+    :resolvers,
+    :tags,
+    :import_schemes,
+    :reveal_secrets,
+    :secret_module
+  ]
 
   @doc """
   Loads a CASC file -- `config/config.casc` (relative to `File.cwd!/0`,
@@ -74,24 +103,43 @@ defmodule CooperConfig do
 
   Every option `Cooper.load_file/2` accepts is supported, plus
   `:reveal_secrets` (see `CooperConfig.Convert`'s moduledoc for the
-  tradeoff), defaulting to `true`. Raises on a load failure -- same
+  tradeoff), defaulting to `true`, and `:secret_module`, which re-wraps
+  each secret in a type you own instead. An unrecognized option raises
+  rather than being ignored. Raises on a load failure -- same
   reasoning as `CooperConfig.Provider`: continuing to boot with
   incomplete config is worse than not booting.
   """
   @spec load!(String.t(), opts()) :: :ok
   def load!(path \\ "config/config.casc", opts \\ []) do
-    {reveal_secrets, cooper_opts} = Keyword.pop(opts, :reveal_secrets, true)
+    validate_opts!(opts)
+    {convert_opts, cooper_opts} = Keyword.split(opts, [:reveal_secrets, :secret_module])
 
     case Cooper.load_file(path, cooper_opts) do
       {:ok, data} ->
         data
-        |> CooperConfig.Convert.to_app_config(reveal_secrets: reveal_secrets)
+        |> CooperConfig.Convert.to_app_config(convert_opts)
         |> apply_config()
 
         :ok
 
       {:error, error} ->
         raise "failed to load CASC config from #{inspect(path)}:\n\n#{format_error(error)}"
+    end
+  end
+
+  # Refuses any option outside `@known_opts`, naming the offender and what is
+  # accepted, since the likely cause is a typo or a dependency older than the
+  # option being passed.
+  defp validate_opts!(opts) do
+    case Keyword.keys(opts) -- @known_opts do
+      [] ->
+        :ok
+
+      unknown ->
+        raise ArgumentError,
+              "CooperConfig.load!/2 received unknown option(s): #{inspect(unknown)}. " <>
+                "Supported options: #{inspect(@known_opts)}. If one of these was added in a " <>
+                "newer cooper/cooper_config, check the versions you have installed."
     end
   end
 

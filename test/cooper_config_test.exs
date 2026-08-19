@@ -51,4 +51,21 @@ defmodule CooperConfigTest do
       assert {:ok, _tree, _vars, _guard_names} = Cooper.Cache.fetch(absolute, root)
     end
   end
+
+  describe "load!/2 option validation" do
+    test "rejects an unknown option instead of silently dropping it" do
+      # Both this library and Cooper ignore unknown keys on their own, so a
+      # typo used to mean the option simply did not happen.
+      error =
+        assert_raise ArgumentError, fn ->
+          CooperConfig.load!(@fixture, secret_modul: SomeModule)
+        end
+
+      assert Exception.message(error) =~ "unknown option(s): [:secret_modul]"
+    end
+
+    test "still accepts options forwarded to Cooper.load_file/2" do
+      assert :ok = CooperConfig.load!(@fixture, cache: false, dotenv_override: true)
+    end
+  end
 end

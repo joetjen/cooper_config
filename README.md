@@ -85,7 +85,19 @@ end
 what `Cooper.load_file/2` does (`:env`, `:resolvers`, `:tags`,
 `:import_schemes`, `:dotenv`, `:dotenv_env`, `:dotenv_files`), plus
 `:reveal_secrets` (default `true` — see `CooperConfig.Convert`'s
-moduledoc for the tradeoff of turning it off). `:env` is an override
+moduledoc for the tradeoff of turning it off) and `:secret_module`,
+which reveals each secret and immediately re-wraps it in a type you own
+(`SomeModule.new(value)`). That last one is for a codebase that already
+has its own secret type and does not want a dependency's struct in its
+configuration contracts: same leak protection as
+`reveal_secrets: false`, but consuming code reveals through a type it
+controls. It is a module rather than a function because these options
+are written into a release's `sys.config`.
+
+An option neither library recognizes raises rather than being ignored, so a
+typo or a version older than the option fails at boot instead of quietly
+doing nothing. `Provider` also raises on `:cache`/`:watch_env`, which it
+cannot honour. `:env` is an override
 layer, not a replacement — `System.get_env/0` (and any `.env` file) is
 always consulted too, for any name not given an explicit entry.
 
