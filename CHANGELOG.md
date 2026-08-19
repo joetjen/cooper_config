@@ -11,10 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Documented the per-environment overlay pattern
   (`import "env/${MIX_ENV:prod}.casc"`) in the README, including the three
-  things that make it work: defaulting to the safest environment, because
-  `MIX_ENV` is absent under a plain `mix run` and in a release; keeping a file
-  present for every selectable value, since a missing import is a load error;
-  and importing the overlay last so it overrides rather than is overridden.
+  things that make it work: defaulting to `dev`, because Mix does not export
+  `MIX_ENV` and a plain `mix run` is the only case the default has to cover;
+  keeping a file present for every selectable value, since a missing import is
+  a load error; and importing the overlay last so it overrides rather than is
+  overridden.
 
   Requires Cooper 0.4.0, which allows `${...}` in an import path.
 

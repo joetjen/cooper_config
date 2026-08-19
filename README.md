@@ -91,7 +91,7 @@ import "inc/database.casc"
 import "inc/logging.casc"
 
 ; Last, so it overrides the categories above.
-import "env/${MIX_ENV:prod}.casc"
+import "env/${MIX_ENV:dev}.casc"
 ```
 
 ```
@@ -106,11 +106,12 @@ config/
 
 Three things make this work in practice:
 
-* **The default carries the cases where the variable is absent.**
-  `MIX_ENV` is *not* an operating-system variable under a plain `mix run` --
-  Mix keeps it to itself -- and a release has no build environment at all.
-  Defaulting to your safest environment means forgetting to set it cannot
-  hand production a development setting.
+* **The default only has to cover a local run.** Mix keeps `MIX_ENV` to
+  itself rather than exporting it, so a plain `mix run` sees nothing --
+  which is precisely the case that wants `dev`. Deployed environments set
+  the variable explicitly (a release image with `ENV MIX_ENV=prod`, `mix
+  test` under `test`), so `${MIX_ENV:dev}` is usually right. Default to
+  something else only where the deployment genuinely might not set it.
 * **Every selectable file must exist.** An import that resolves to a missing
   file is a load error, so `env/prod.casc` needs to be there even when it
   overrides nothing. That is a feature: a typo in the variable fails loudly
