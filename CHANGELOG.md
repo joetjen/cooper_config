@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Documentation
+
+- Documented the per-environment overlay pattern
+  (`import "env/${MIX_ENV:prod}.casc"`) in the README, including the three
+  things that make it work: defaulting to the safest environment, because
+  `MIX_ENV` is absent under a plain `mix run` and in a release; keeping a file
+  present for every selectable value, since a missing import is a load error;
+  and importing the overlay last so it overrides rather than is overridden.
+
+  Requires Cooper 0.4.0, which allows `${...}` in an import path.
+
 ## [0.2.0] - 2026-08-19
 
 ### Changed
