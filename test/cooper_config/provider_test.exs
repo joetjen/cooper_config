@@ -3,6 +3,16 @@ defmodule CooperConfig.ProviderTest do
 
   alias CooperConfig.Provider
 
+  # Stands in for a consuming codebase's own secret type. See
+  # `CooperConfig.ConvertTest` for why `:secret_module` exists at all.
+  defmodule OwnedSecret do
+    @moduledoc false
+    @enforce_keys [:value]
+    defstruct [:value]
+
+    def new(value), do: %__MODULE__{value: value}
+  end
+
   @fixture Path.join([__DIR__, "..", "fixtures", "config.casc"])
   @fixture_with_env Path.join([__DIR__, "..", "fixtures", "config_with_env.casc"])
 
@@ -22,6 +32,41 @@ defmodule CooperConfig.ProviderTest do
     test "defaults resolvers/tags/import_schemes to empty maps and reveal_secrets to true" do
       assert %{resolvers: %{}, tags: %{}, import_schemes: %{}, reveal_secrets: true} =
                Provider.init(path: @fixture)
+    end
+
+    test "rejects an unknown option instead of ignoring it" do
+      # The regression this prevents: passing `:secret_module` to a version that
+      # predates it left secrets revealed in a release, with no warning anywhere.
+      error =
+        assert_raise ArgumentError, fn ->
+          Provider.init(path: @fixture, secret_modul: OwnedSecret)
+        end
+
+      assert Exception.message(error) =~ "unknown option(s): [:secret_modul]"
+      assert Exception.message(error) =~ "check the version you have installed"
+    end
+
+    test "accepts every documented option" do
+      assert %{} =
+               Provider.init(
+                 path: @fixture,
+                 env: %{},
+                 resolvers: %{},
+                 tags: %{},
+                 import_schemes: %{},
+                 dotenv: false,
+                 dotenv_env: :prod,
+                 dotenv_files: [],
+                 reveal_secrets: false,
+                 secret_module: OwnedSecret
+               )
+    end
+
+    test "defaults secret_module to nil and captures it when given" do
+      assert %{secret_module: nil} = Provider.init(path: @fixture)
+
+      assert %{secret_module: OwnedSecret} =
+               Provider.init(path: @fixture, secret_module: OwnedSecret)
     end
 
     test "defaults dotenv/dotenv_env/dotenv_files to nil (Cooper's own default applies)" do
@@ -62,6 +107,15 @@ defmodule CooperConfig.ProviderTest do
                [my_app: [password: %Cooper.Secret{value: "hunter2"}, port: 4000]]
     end
 
+    test "secret_module: re-wraps the password in the consumer's own type" do
+      # The release path end to end: a provider state built from options that a
+      # `mix release` writes into `sys.config`, loading a real file.
+      state = Provider.init(path: @fixture, secret_module: OwnedSecret)
+
+      assert Provider.load([], state) ==
+               [my_app: [password: %OwnedSecret{value: "hunter2"}, port: 4000]]
+    end
+
     test "passes :env through to Cooper.load_file/2" do
       state = Provider.init(path: @fixture_with_env, env: %{"APP_HOST" => "example.com"})
 
@@ -76,20 +130,27 @@ defmodule CooperConfig.ProviderTest do
       end
     end
 
-    test "never populates Cooper's file cache, and ignores a :cache option if given" do
+    test "never populates Cooper's file cache" do
       absolute = Path.expand(@fixture)
       root = Path.dirname(absolute)
       Cooper.Cache.invalidate(absolute)
 
-      state = Provider.init(path: @fixture, cache: true)
+      state = Provider.init(path: @fixture)
       Provider.load([], state)
 
       # `Config.Provider` callbacks run before `:cooper`'s own OTP
       # application -- and `Cooper.Cache`'s GenServer/ETS table -- has
-      # started, so `load/2` always forces `cache: false` regardless of
-      # what's passed in; reaching for the cache here would crash in a
-      # real release boot, not just be pointless.
+      # started, so `load/2` always forces `cache: false`; reaching for the
+      # cache here would crash in a real release boot, not just be pointless.
       assert Cooper.Cache.fetch(absolute, root) == :miss
+    end
+
+    test "rejects :cache rather than accepting it and doing the opposite" do
+      # It used to be ignored silently. Someone passing `cache: true` wants
+      # caching, and getting none without being told is the same hazard as any
+      # other silently dropped option.
+      assert_raise ArgumentError, fn -> Provider.init(path: @fixture, cache: true) end
+      assert_raise ArgumentError, fn -> Provider.init(path: @fixture, watch_env: true) end
     end
   end
 end
