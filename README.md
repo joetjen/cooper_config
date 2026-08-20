@@ -79,6 +79,50 @@ def deps do
 end
 ```
 
+## Per-environment configuration
+
+A document can select an overlay for its build or deployment environment,
+rather than that selection living in the code that loads it:
+
+```casc
+#@version = 1.0
+
+import "inc/database.casc"
+import "inc/logging.casc"
+
+; Last, so it overrides the categories above.
+import "env/${MIX_ENV:dev}.casc"
+```
+
+```
+config/
+  my_app.casc          the entry document above
+  inc/                 one file per concern, imported by whichever entry needs it
+  env/
+    dev.casc
+    test.casc
+    prod.casc          may be empty; see below
+```
+
+Three things make this work in practice:
+
+* **The default only has to cover a local run.** Mix keeps `MIX_ENV` to
+  itself rather than exporting it, so a plain `mix run` sees nothing --
+  which is precisely the case that wants `dev`. Deployed environments set
+  the variable explicitly (a release image with `ENV MIX_ENV=prod`, `mix
+  test` under `test`), so `${MIX_ENV:dev}` is usually right. Default to
+  something else only where the deployment genuinely might not set it.
+* **Every selectable file must exist.** An import that resolves to a missing
+  file is a load error, so `env/prod.casc` needs to be there even when it
+  overrides nothing. That is a feature: a typo in the variable fails loudly
+  instead of silently skipping the overlay.
+* **Put the overlay import last.** Later imports override earlier ones for the
+  same key, so an overlay placed first would be overridden by the very
+  categories it means to adjust.
+
+Only `${...}` may appear in an import path. Imports are resolved while the
+document is parsed, so a `%{...}` config reference cannot be available yet.
+
 ## Options
 
 `CooperConfig.Provider` and `CooperConfig.load!/2` both accept most of
