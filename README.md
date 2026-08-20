@@ -79,6 +79,34 @@ def deps do
 end
 ```
 
+## Loading under Mix
+
+`CooperConfig.Provider` covers a release: it runs before any application starts.
+Under Mix there is no equivalent hook, which matters for any library that
+validates its configuration when it starts — by the time `test_helper.exs` or
+`.iex.exs` runs, Mix has already started it.
+
+`mix cooper.load` fills that gap. Put it ahead of whichever task starts
+applications:
+
+```elixir
+# mix.exs
+aliases: [
+  test: ["cooper.load", "test"],
+  run: ["cooper.load", "run"]
+]
+```
+
+Both run in one VM, so the configuration is in place before the following task
+starts anything. A consuming project needs no `Application` module, no
+supervision child and no manual `Application.ensure_all_started/1` — the same
+arrangement a release gets from its provider.
+
+It passes `MIX_ENV` to the document, because Mix does not export it. That is
+what makes `import "env/${MIX_ENV:dev}.casc"` select the right overlay under
+`mix test` and `mix run` alike. `--path` names a different document and
+`--secret-module` wraps secrets rather than revealing them.
+
 ## Per-environment configuration
 
 A document can select an overlay for its build or deployment environment,

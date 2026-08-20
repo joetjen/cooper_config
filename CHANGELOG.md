@@ -7,10 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `mix cooper.load`, which applies a CASC document to the application
+  environment before Mix starts anything:
+
+      aliases: [test: ["cooper.load", "test"]]
+
+  `Config.Provider` covers a release, running before any application starts.
+  Under Mix there is no such hook, so a library that validates its configuration
+  at start had nowhere to read it from once `config/*.exs` was gone -- a
+  `test_helper.exs` runs after Mix has already started it. Both tasks run in one
+  VM, so the configuration is in place before the following task starts
+  applications, and a consuming project needs no `Application` module,
+  supervision child or manual `Application.ensure_all_started/1`.
+
+  It passes `MIX_ENV` to the document, since Mix does not export it, which is
+  what lets an `env/${MIX_ENV:dev}.casc` import resolve. `--path` selects a
+  different document; `--secret-module` wraps secrets rather than revealing
+  them.
+
+  Requires Cooper 0.4.0 for interpolated import paths.
+
 ### Documentation
 
 - Documented the per-environment overlay pattern
-  (`import "env/${MIX_ENV:prod}.casc"`) in the README, including the three
+  (`import "env/${MIX_ENV:dev}.casc"`) in the README, including the three
   things that make it work: defaulting to `dev`, because Mix does not export
   `MIX_ENV` and a plain `mix run` is the only case the default has to cover;
   keeping a file present for every selectable value, since a missing import is

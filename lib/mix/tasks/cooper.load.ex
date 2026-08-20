@@ -1,6 +1,4 @@
 defmodule Mix.Tasks.Cooper.Load do
-  @shortdoc "Loads a CASC document into the application environment"
-
   @moduledoc """
   Loads a CASC document into the application environment, before Mix starts
   anything.
@@ -41,6 +39,8 @@ defmodule Mix.Tasks.Cooper.Load do
   """
 
   use Mix.Task
+
+  @shortdoc "Loads a CASC document into the application environment"
 
   @default_path "config/config.casc"
 
