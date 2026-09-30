@@ -29,6 +29,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   Requires Cooper 0.4.0 for interpolated import paths.
 
+### Changed
+
+- **BREAKING (behaviour):** typed CASC literals now reach application
+  configuration as plain values instead of `Cooper`'s tagged forms. A byte size
+  (`1GiB`) becomes an integer number of bytes, a duration (`14d`) an integer
+  number of milliseconds, an IP address the `:inet` tuple and a CIDR block an
+  `{address, prefix}` pair. Code reading app env knows nothing about `Cooper`,
+  so `{:bytes, n}` failed an ordinary `is_integer/1` check -- Hreinn's
+  `max_object_bytes = 1GiB` was refused by `ASCO.S3.Config` that way. A duration
+  that is not a whole number of milliseconds (`1500us`) raises `ArgumentError`
+  rather than being rounded.
+
 ### Documentation
 
 - Documented the per-environment overlay pattern
