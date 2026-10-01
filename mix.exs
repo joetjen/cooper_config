@@ -58,15 +58,12 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      # `~> 0.3`, not `~> 0.2`: this library now validates option names against
-      # an enumerated list that includes `:dotenv_override`, which only exists
-      # from Cooper 0.3.0. Allowing an older Cooper would let it accept an
-      # option the installed Cooper silently ignores -- the exact failure this
-      # validation was added to prevent.
-      # TEMPORARY: local Cooper for the unreleased `!module` tag and interpolated
-      # import paths. On release this becomes `{:cooper, "~> 0.4"}` -- the
-      # `mix cooper.load` task's overlay selection depends on both.
-      {:cooper, path: "/Users/jan.oetjen/Projects/__mine__/cooper", override: true}
+      # `~> 0.4`: `mix cooper.load`'s overlay selection needs Cooper 0.4's
+      # `!module` tag and interpolated import paths. It also covers the reason
+      # for the earlier `~> 0.3`: option names are validated against a list
+      # that includes `:dotenv_override`, which an older Cooper would silently
+      # ignore.
+      {:cooper, "~> 0.4"}
     ]
   end
 

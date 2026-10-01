@@ -11,8 +11,29 @@ defmodule CooperConfig.Convert do
   (`Config.Reader.merge/2` only deep-merges when both sides are keyword
   lists; a plain map would replace wholesale instead). Lists and tuples
   are walked element-wise but keep their own shape; every other value
-  (numbers, strings, atoms, booleans, `Cooper.IPv4`/`Cooper.IPv6`,
-  duration/byte-size tuples, ...) passes through unchanged.
+  (numbers, strings, atoms, booleans, other structs, ...) passes through
+  unchanged.
+
+  ## Typed literals
+
+  CASC's typed literals are tagged inside a `Cooper` result, and the tag
+  is dropped here, because application configuration is read by code
+  that knows nothing about `Cooper`:
+
+  | CASC | `Cooper` value | application configuration |
+  | --- | --- | --- |
+  | `1GiB` | `{:bytes, 1073741824}` | `1073741824` (bytes) |
+  | `14d` | `{:duration, 1209600000000000}` | `1209600000` (milliseconds) |
+  | `10.0.0.1` | `%Cooper.IPv4{address: {10, 0, 0, 1}}` | `{10, 0, 0, 1}` |
+  | `10.0.0.0/8` | `%Cooper.IPv4{address: {10, 0, 0, 0}, prefix: 8}` | `{{10, 0, 0, 0}, 8}` |
+
+  IPv6 follows IPv4, with the eight-element `:inet` tuple.
+
+  Durations become milliseconds, the unit of `Process.send_after/3`,
+  `:timer`, `GenServer` timeouts and most library options. A duration
+  that is not a whole number of milliseconds (`1500us`) raises
+  `ArgumentError` rather than being rounded, since a silently shortened
+  timeout is harder to find than a failed boot.
 
   ## Secrets
 
@@ -102,6 +123,13 @@ defmodule CooperConfig.Convert do
     secret |> Secret.reveal() |> normalize(mode) |> module.new()
   end
 
+  defp normalize({:bytes, bytes}, _mode) when is_integer(bytes), do: bytes
+  defp normalize({:duration, ns}, _mode) when is_integer(ns), do: to_milliseconds(ns)
+  defp normalize(%Cooper.IPv4{address: address, prefix: nil}, _mode), do: address
+  defp normalize(%Cooper.IPv4{address: address, prefix: prefix}, _mode), do: {address, prefix}
+  defp normalize(%Cooper.IPv6{address: address, prefix: nil}, _mode), do: address
+  defp normalize(%Cooper.IPv6{address: address, prefix: prefix}, _mode), do: {address, prefix}
+
   defp normalize(%_struct{} = value, _mode), do: value
 
   defp normalize(value, mode) when is_map(value) do
@@ -120,4 +148,14 @@ defmodule CooperConfig.Convert do
   end
 
   defp normalize(value, _mode), do: value
+
+  # Converts a `Cooper` duration (nanoseconds) into whole milliseconds.
+  @spec to_milliseconds(integer()) :: integer()
+  defp to_milliseconds(ns) when rem(ns, 1_000_000) == 0, do: div(ns, 1_000_000)
+
+  defp to_milliseconds(ns) do
+    raise ArgumentError,
+          "duration of #{ns}ns is not a whole number of milliseconds; " <>
+            "application configuration holds durations in milliseconds"
+  end
 end
