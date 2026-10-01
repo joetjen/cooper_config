@@ -53,8 +53,47 @@ defmodule CooperConfig.ConvertTest do
     end
 
     test "passes non-Secret structs through unchanged" do
-      ip = %Cooper.IPv4{address: {127, 0, 0, 1}, prefix: nil}
-      assert Convert.to_app_config(%{"my_app" => %{"ip" => ip}}) == [my_app: [ip: ip]]
+      date = ~D[2026-09-30]
+      assert Convert.to_app_config(%{"my_app" => %{"date" => date}}) == [my_app: [date: date]]
+    end
+  end
+
+  describe "to_app_config/2 with typed literals" do
+    test "turns a byte size into an integer number of bytes" do
+      assert app_value("size = 1GiB") == 1_073_741_824
+      assert app_value("size = 512KB") == 512_000
+    end
+
+    test "turns a duration into integer milliseconds" do
+      assert app_value("timeout = 14d") == 1_209_600_000
+      assert app_value("timeout = 500ms") == 500
+      assert app_value("timeout = 2000us") == 2
+    end
+
+    test "rejects a duration that is not a whole number of milliseconds" do
+      assert_raise ArgumentError, ~r/1500000ns is not a whole number of milliseconds/, fn ->
+        app_value("timeout = 1500us")
+      end
+    end
+
+    test "turns an IP address into an :inet tuple" do
+      assert app_value("ip = 10.0.0.1") == {10, 0, 0, 1}
+      assert app_value("ip = ::1") == {0, 0, 0, 0, 0, 0, 0, 1}
+    end
+
+    test "turns a CIDR block into an {address, prefix} pair" do
+      assert app_value("ip = 10.0.0.0/8") == {{10, 0, 0, 0}, 8}
+      assert app_value("ip = fd00::/8") == {{0xFD00, 0, 0, 0, 0, 0, 0, 0}, 8}
+    end
+
+    test "converts typed literals nested in lists and variables" do
+      assert app_value("sizes = [1KiB, 2KiB]") == [1024, 2048]
+      assert app_value("size = @{limit}", "@*limit = 1GiB") == 1_073_741_824
+    end
+
+    test "converts the tagged values directly" do
+      data = %{"my_app" => %{"b" => {:bytes, 8}, "d" => {:duration, 3_000_000}}}
+      assert Convert.to_app_config(data) == [my_app: [b: 8, d: 3]]
     end
 
     test "reveals a Cooper.Secret by default" do
@@ -188,4 +227,13 @@ defmodule CooperConfig.ConvertTest do
   end
 
   defp unwrap_all(value), do: value
+
+  # Loads a one-block CASC document and returns the single value it sets.
+  defp app_value(body, preamble \\ "") do
+    {:ok, data} =
+      Cooper.load_string("#@version = 1.0\n" <> preamble <> "\nmy_app {\n" <> body <> "\n}\n")
+
+    [my_app: [{_key, value}]] = Convert.to_app_config(data)
+    value
+  end
 end

@@ -1,7 +1,7 @@
 defmodule CooperConfig.MixProject do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.3.0"
 
   # `mix precommit` includes `test` as a step; without this, Mix runs
   # the whole alias chain (including `mix test`) in :dev, and `mix test`
@@ -58,12 +58,12 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      # `~> 0.3`, not `~> 0.2`: this library now validates option names against
-      # an enumerated list that includes `:dotenv_override`, which only exists
-      # from Cooper 0.3.0. Allowing an older Cooper would let it accept an
-      # option the installed Cooper silently ignores -- the exact failure this
-      # validation was added to prevent.
-      {:cooper, "~> 0.3"}
+      # `~> 0.4`: `mix cooper.load`'s overlay selection needs Cooper 0.4's
+      # `!module` tag and interpolated import paths. It also covers the reason
+      # for the earlier `~> 0.3`: option names are validated against a list
+      # that includes `:dotenv_override`, which an older Cooper would silently
+      # ignore.
+      {:cooper, "~> 0.4"}
     ]
   end
 

@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-01
+
+### Added
+
+- `mix cooper.load`, which applies a CASC document to the application
+  environment before Mix starts anything:
+
+      aliases: [test: ["cooper.load", "test"]]
+
+  `Config.Provider` covers a release, running before any application starts.
+  Under Mix there is no such hook, so a library that validates its configuration
+  at start had nowhere to read it from once `config/*.exs` was gone -- a
+  `test_helper.exs` runs after Mix has already started it. Both tasks run in one
+  VM, so the configuration is in place before the following task starts
+  applications, and a consuming project needs no `Application` module,
+  supervision child or manual `Application.ensure_all_started/1`.
+
+  It passes `MIX_ENV` to the document, since Mix does not export it, which is
+  what lets an `env/${MIX_ENV:dev}.casc` import resolve. `--path` selects a
+  different document; `--secret-module` wraps secrets rather than revealing
+  them.
+
+  Requires Cooper 0.4.0 for interpolated import paths.
+
+### Changed
+
+- **BREAKING (behaviour):** typed CASC literals now reach application
+  configuration as plain values instead of `Cooper`'s tagged forms. A byte size
+  (`1GiB`) becomes an integer number of bytes, a duration (`14d`) an integer
+  number of milliseconds, an IP address the `:inet` tuple and a CIDR block an
+  `{address, prefix}` pair. Code reading app env knows nothing about `Cooper`,
+  so `{:bytes, n}` failed an ordinary `is_integer/1` check -- Hreinn's
+  `max_object_bytes = 1GiB` was refused by `ASCO.S3.Config` that way. A duration
+  that is not a whole number of milliseconds (`1500us`) raises `ArgumentError`
+  rather than being rounded.
+- Requires `cooper ~> 0.4` (was `~> 0.3`). `mix cooper.load` selects the
+  environment overlay with Cooper 0.4's interpolated import paths and
+  `!module` tag.
+
+### Documentation
+
+- Documented the per-environment overlay pattern
+  (`import "env/${MIX_ENV:dev}.casc"`) in the README, including the three
+  things that make it work: defaulting to `dev`, because Mix does not export
+  `MIX_ENV` and a plain `mix run` is the only case the default has to cover;
+  keeping a file present for every selectable value, since a missing import is
+  a load error; and importing the overlay last so it overrides rather than is
+  overridden.
+
+  Requires Cooper 0.4.0, which allows `${...}` in an import path.
+
 ## [0.2.0] - 2026-08-19
 
 ### Changed
