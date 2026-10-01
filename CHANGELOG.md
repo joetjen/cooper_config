@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `max_object_bytes = 1GiB` was refused by `ASCO.S3.Config` that way. A duration
   that is not a whole number of milliseconds (`1500us`) raises `ArgumentError`
   rather than being rounded.
+- Requires `cooper ~> 0.4` (was `~> 0.3`). `mix cooper.load` selects the
+  environment overlay with Cooper 0.4's interpolated import paths and
+  `!module` tag.
 
 ### Documentation
 
