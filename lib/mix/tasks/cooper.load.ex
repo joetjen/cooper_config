@@ -30,8 +30,9 @@ defmodule Mix.Tasks.Cooper.Load do
       `CooperConfig.Convert`), rather than revealing it.
 
   `MIX_ENV` is passed to the document as an environment variable, because Mix
-  does not export it. That is what makes `import "env/${MIX_ENV:dev}.casc"`
-  select the right overlay under `mix test` and `mix run` alike.
+  does not export it. Cooper derives `COOPER_ENV` from it, which is what makes
+  `import "env/${COOPER_ENV}.casc"` select the right overlay under `mix test`
+  and `mix run` alike.
 
   Caching is off: a Mix task runs before `:cooper`'s own application, so the
   cache's ETS table does not exist yet, and a document read once per invocation
@@ -59,8 +60,8 @@ defmodule Mix.Tasks.Cooper.Load do
     CooperConfig.load!(path, load_options(options))
   end
 
-  # Builds the loader options, passing the build environment through so an
-  # `${MIX_ENV}` reference in the document resolves.
+  # Builds the loader options, passing the build environment through as
+  # `MIX_ENV`, which Cooper derives `${COOPER_ENV}` from.
   @spec load_options(keyword()) :: keyword()
   defp load_options(options) do
     base = [cache: false, env: %{"MIX_ENV" => to_string(Mix.env())}]

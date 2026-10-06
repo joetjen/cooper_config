@@ -102,9 +102,10 @@ starts anything. A consuming project needs no `Application` module, no
 supervision child and no manual `Application.ensure_all_started/1` — the same
 arrangement a release gets from its provider.
 
-It passes `MIX_ENV` to the document, because Mix does not export it. That is
-what makes `import "env/${MIX_ENV:dev}.casc"` select the right overlay under
-`mix test` and `mix run` alike. `--path` names a different document and
+It passes `MIX_ENV` to the document, because Mix does not export it. Cooper
+derives `COOPER_ENV` from it, which is what makes
+`import "env/${COOPER_ENV}.casc"` select the right overlay under `mix test`
+and `mix run` alike. `--path` names a different document and
 `--secret-module` wraps secrets rather than revealing them.
 
 ## Per-environment configuration
@@ -119,7 +120,7 @@ import "inc/database.casc"
 import "inc/logging.casc"
 
 ; Last, so it overrides the categories above.
-import "env/${MIX_ENV:dev}.casc"
+import "env/${COOPER_ENV}.casc"
 ```
 
 ```
@@ -134,12 +135,12 @@ config/
 
 Three things make this work in practice:
 
-* **The default only has to cover a local run.** Mix keeps `MIX_ENV` to
-  itself rather than exporting it, so a plain `mix run` sees nothing --
-  which is precisely the case that wants `dev`. Deployed environments set
-  the variable explicitly (a release image with `ENV MIX_ENV=prod`, `mix
-  test` under `test`), so `${MIX_ENV:dev}` is usually right. Default to
-  something else only where the deployment genuinely might not set it.
+* **`COOPER_ENV` is always set.** Cooper takes it from a real `COOPER_ENV`,
+  else `MIX_ENV`, else the live Mix environment, else -- in a release -- the
+  compiled `config :cooper, dotenv_env: config_env()`, else `dev`, mapped
+  onto the names every Cooper uses (`dev`, `staging`, `test`, `prod`). So
+  one document selects the same overlay in Elixir, Praxis, PHP and Node;
+  a deployment sets `COOPER_ENV=prod` (or `MIX_ENV=prod`) explicitly.
 * **Every selectable file must exist.** An import that resolves to a missing
   file is a load error, so `env/prod.casc` needs to be there even when it
   overrides nothing. That is a feature: a typo in the variable fails loudly
