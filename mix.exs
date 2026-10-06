@@ -93,7 +93,7 @@ defmodule CooperConfig.MixProject do
 
   defp package do
     [
-      licenses: ["MIT"],
+      licenses: ["Apache-2.0"],
       links: %{
         "GitHub" => "https://github.com/joetjen/cooper_config",
         "Docs (main)" => "https://joetjen.github.io/cooper_config/"

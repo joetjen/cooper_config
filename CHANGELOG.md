@@ -19,6 +19,12 @@ Cooper checkout beside this one.
   as written, before Cooper's own convention. Both options were refused
   as unknown.
 
+### Changed
+
+- **Licensed under Apache-2.0 from this release**, replacing MIT --
+  Apache 2.0 adds an express patent grant MIT lacks. Releases already
+  published stay MIT.
+
 ## [0.3.0] - 2026-10-01
 
 ### Added

@@ -219,4 +219,4 @@ test suite, and Dialyzer, in that order.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache-2.0 — see [LICENSE](LICENSE). Releases before 0.4.0 were MIT.
