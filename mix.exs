@@ -63,10 +63,7 @@ defmodule CooperConfig.MixProject do
       # nothing in Cooper 0.4. The release of this library comes after
       # Cooper 0.6's and pins `{:cooper, "~> 0.6"}` instead -- never
       # release with a path dependency.
-      {:cooper, path: "../cooper"},
-      # Cooper reads `.env` files through this optional dependency; the
-      # tests that `:dotenv_dir` is forwarded need it to read any.
-      {:dotenvy, "~> 1.1", only: :test}
+      {:cooper, path: "../cooper"}
     ]
   end
 

@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 Needs Cooper 0.6, released first; until then the dependency is the
-Cooper checkout beside this one.
+Cooper checkout beside this one. Cooper 0.6 depends on `dotenvy` itself,
+so `.env` files are read without adding it here.
 
 ### Added
 
