@@ -155,7 +155,8 @@ document is parsed, so a `%{...}` config reference cannot be available yet.
 
 `CooperConfig.Provider` and `CooperConfig.load!/2` both accept most of
 what `Cooper.load_file/2` does (`:env`, `:resolvers`, `:tags`,
-`:import_schemes`, `:dotenv`, `:dotenv_env`, `:dotenv_files`), plus
+`:import_schemes`, `:modules`, `:dotenv`, `:dotenv_env`,
+`:dotenv_files`, `:dotenv_dir`), plus
 `:reveal_secrets` (default `true` — see `CooperConfig.Convert`'s
 moduledoc for the tradeoff of turning it off) and `:secret_module`,
 which reveals each secret and immediately re-wraps it in a type you own
