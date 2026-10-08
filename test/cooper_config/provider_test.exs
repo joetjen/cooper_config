@@ -57,6 +57,8 @@ defmodule CooperConfig.ProviderTest do
                  dotenv: false,
                  dotenv_env: :prod,
                  dotenv_files: [],
+                 dotenv_dir: "/srv/app",
+                 modules: %{"Crypto" => :crypto},
                  reveal_secrets: false,
                  secret_module: OwnedSecret
                )

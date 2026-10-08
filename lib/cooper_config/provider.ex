@@ -42,9 +42,13 @@ defmodule CooperConfig.Provider do
       `Cooper.load_file/2`'s own default (nothing extra layered on top
       of `System.get_env/0`/`.env`) if omitted.
     * `:resolvers`, `:tags`, `:import_schemes` -- default to `%{}`.
-    * `:dotenv`, `:dotenv_env`, `:dotenv_files` -- `.env` file layering,
-      on by default; see `Cooper.Dotenv` for the full rules. Omitted
-      here means Cooper's own default applies.
+    * `:dotenv`, `:dotenv_env`, `:dotenv_files`, `:dotenv_dir` -- `.env`
+      file layering, on by default, read from the project root (in a
+      release, `RELEASE_ROOT`) unless `:dotenv_dir` names another
+      directory; see `Cooper.Dotenv` for the full rules. Omitted here
+      means Cooper's own default applies.
+    * `:modules` -- what a `!module("Name")` means, by the name exactly
+      as written, before Cooper's own convention; see `Cooper`.
 
   `:cache`/`:watch_env` are deliberately **not** exposed -- `load/2`
   always calls `Cooper.load_file/2` with `cache: false`, and passing
@@ -85,6 +89,8 @@ defmodule CooperConfig.Provider do
           dotenv: boolean(),
           dotenv_env: atom() | nil,
           dotenv_files: [String.t()],
+          dotenv_dir: String.t(),
+          modules: %{optional(String.t()) => module()},
           reveal_secrets: boolean(),
           secret_module: module() | nil
         ]
@@ -102,6 +108,8 @@ defmodule CooperConfig.Provider do
     :dotenv,
     :dotenv_env,
     :dotenv_files,
+    :dotenv_dir,
+    :modules,
     :reveal_secrets,
     :secret_module
   ]
@@ -130,6 +138,8 @@ defmodule CooperConfig.Provider do
       dotenv: Keyword.get(opts, :dotenv),
       dotenv_env: Keyword.get(opts, :dotenv_env),
       dotenv_files: Keyword.get(opts, :dotenv_files),
+      dotenv_dir: Keyword.get(opts, :dotenv_dir),
+      modules: Keyword.get(opts, :modules),
       reveal_secrets: Keyword.get(opts, :reveal_secrets, true),
       secret_module: Keyword.get(opts, :secret_module)
     }
@@ -170,7 +180,9 @@ defmodule CooperConfig.Provider do
         import_schemes: state.import_schemes,
         dotenv: state.dotenv,
         dotenv_env: state.dotenv_env,
-        dotenv_files: state.dotenv_files
+        dotenv_files: state.dotenv_files,
+        dotenv_dir: state.dotenv_dir,
+        modules: state.modules
       ]
       |> Enum.reject(fn {_key, value} -> is_nil(value) end)
       # `Config.Provider` callbacks run before `:cooper`'s own OTP

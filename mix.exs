@@ -58,12 +58,12 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      # `~> 0.4`: `mix cooper.load`'s overlay selection needs Cooper 0.4's
-      # `!module` tag and interpolated import paths. It also covers the reason
-      # for the earlier `~> 0.3`: option names are validated against a list
-      # that includes `:dotenv_override`, which an older Cooper would silently
-      # ignore.
-      {:cooper, "~> 0.4"}
+      # The unreleased Cooper beside this checkout, until it is released:
+      # `:dotenv_dir` and `:modules` are validated as options here and do
+      # nothing in Cooper 0.4. The release of this library comes after
+      # Cooper 0.6's and pins `{:cooper, "~> 0.6"}` instead -- never
+      # release with a path dependency.
+      {:cooper, path: "../cooper"}
     ]
   end
 
@@ -90,7 +90,7 @@ defmodule CooperConfig.MixProject do
 
   defp package do
     [
-      licenses: ["MIT"],
+      licenses: ["Apache-2.0"],
       links: %{
         "GitHub" => "https://github.com/joetjen/cooper_config",
         "Docs (main)" => "https://joetjen.github.io/cooper_config/"

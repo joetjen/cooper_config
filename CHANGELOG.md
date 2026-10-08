@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Needs Cooper 0.6, released first; until then the dependency is the
+Cooper checkout beside this one. Cooper 0.6 depends on `dotenvy` itself,
+so `.env` files are read without adding it here.
+
+### Added
+
+- **`:dotenv_dir`** on `load!/2` and `CooperConfig.Provider` -- where
+  Cooper reads `.env` files from, when not the project root (in a
+  release, `RELEASE_ROOT`), which is Cooper's own default.
+- **`:modules`** on both -- what a `!module("Name")` means, by the name
+  as written, before Cooper's own convention. Both options were refused
+  as unknown.
+
+### Changed
+
+- **Licensed under Apache-2.0 from this release**, replacing MIT --
+  Apache 2.0 adds an express patent grant MIT lacks. Releases already
+  published stay MIT.
+
 ## [0.3.0] - 2026-10-01
 
 ### Added
