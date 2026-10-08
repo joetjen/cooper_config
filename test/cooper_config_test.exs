@@ -67,5 +67,35 @@ defmodule CooperConfigTest do
     test "still accepts options forwarded to Cooper.load_file/2" do
       assert :ok = CooperConfig.load!(@fixture, cache: false, dotenv_override: true)
     end
+
+    @tag :tmp_dir
+    test "forwards :dotenv_dir, so .env files are read from where it says", %{tmp_dir: dir} do
+      File.write!(Path.join(dir, ".env"), "COOPER_CONFIG_DIR_PROBE=from-dir\n")
+      doc = Path.join(dir, "config.casc")
+
+      File.write!(
+        doc,
+        "#@version = 1.0\ncooper_config_probe { v = ${COOPER_CONFIG_DIR_PROBE} }\n"
+      )
+
+      on_exit(fn -> Application.delete_env(:cooper_config_probe, :v) end)
+
+      assert :ok = CooperConfig.load!(doc, cache: false, dotenv_dir: dir)
+      assert Application.get_env(:cooper_config_probe, :v) == "from-dir"
+    end
+
+    test "forwards :modules to !module" do
+      doc =
+        Path.join(
+          System.tmp_dir!(),
+          "cooper_config_modules_#{System.unique_integer([:positive])}.casc"
+        )
+
+      File.write!(doc, "#@version = 1.0\ncooper_config_probe { m = !module(\"Crypto\") }\n")
+      on_exit(fn -> Application.delete_env(:cooper_config_probe, :m) end)
+
+      assert :ok = CooperConfig.load!(doc, cache: false, modules: %{"Crypto" => :crypto})
+      assert Application.get_env(:cooper_config_probe, :m) == :crypto
+    end
   end
 end

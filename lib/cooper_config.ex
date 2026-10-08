@@ -39,6 +39,8 @@ defmodule CooperConfig do
           dotenv: boolean(),
           dotenv_env: atom() | nil,
           dotenv_files: [String.t()],
+          dotenv_dir: String.t(),
+          modules: %{optional(String.t()) => module()},
           cache: boolean(),
           watch_env: boolean(),
           root: String.t(),
@@ -62,6 +64,7 @@ defmodule CooperConfig do
     :dotenv,
     :dotenv_env,
     :dotenv_files,
+    :dotenv_dir,
     :dotenv_override,
     :cache,
     :watch_env,
@@ -69,6 +72,7 @@ defmodule CooperConfig do
     :resolvers,
     :tags,
     :import_schemes,
+    :modules,
     :reveal_secrets,
     :secret_module
   ]
