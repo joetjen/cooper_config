@@ -74,7 +74,7 @@ needed:
 ```elixir
 def deps do
   [
-    {:cooper_config, "~> 0.3.0"}
+    {:cooper_config, "~> 0.4.0"}
   ]
 end
 ```

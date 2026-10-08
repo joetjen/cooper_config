@@ -1,7 +1,7 @@
 defmodule CooperConfig.MixProject do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.4.0"
 
   # `mix precommit` includes `test` as a step; without this, Mix runs
   # the whole alias chain (including `mix test`) in :dev, and `mix test`
@@ -58,12 +58,9 @@ defmodule CooperConfig.MixProject do
       # ExDoc is invoked via `mix docs`
 
       # === RUNTIME ===
-      # The unreleased Cooper beside this checkout, until it is released:
-      # `:dotenv_dir` and `:modules` are validated as options here and do
-      # nothing in Cooper 0.4. The release of this library comes after
-      # Cooper 0.6's and pins `{:cooper, "~> 0.6"}` instead -- never
-      # release with a path dependency.
-      {:cooper, path: "../cooper"}
+      # 0.5 is the first Cooper with `:dotenv_dir` and `:modules`, which
+      # this library passes through.
+      {:cooper, "~> 0.5"}
     ]
   end
 
