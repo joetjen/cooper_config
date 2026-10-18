@@ -91,9 +91,30 @@ defmodule CooperConfig.ConvertTest do
       assert app_value("size = @{limit}", "@*limit = 1GiB") == 1_073_741_824
     end
 
-    test "converts the tagged values directly" do
-      data = %{"my_app" => %{"b" => {:bytes, 8}, "d" => {:duration, 3_000_000}}}
+    test "converts the typed values directly" do
+      data = %{
+        "my_app" => %{
+          "b" => %Cooper.ByteSize{bytes: 8},
+          "d" => %Cooper.Duration{nanoseconds: 3_000_000}
+        }
+      }
+
       assert Convert.to_app_config(data) == [my_app: [b: 8, d: 3]]
+    end
+
+    # A tuple a document wrote is a tuple, whatever its first element:
+    # it was once taken for a byte size or a duration, because Cooper
+    # held those as {:bytes, n} and {:duration, ns}.
+    test "leaves a tuple a document wrote as a tuple" do
+      assert app_value("t = (bytes, 8)") == {:bytes, 8}
+      assert app_value("t = (duration, 3)") == {:duration, 3}
+    end
+
+    # :infinity is what a GenServer timeout and most BEAM options take,
+    # so `timeout = inf` keeps meaning what it always meant here.
+    test "turns infinity into the atoms the BEAM uses for it" do
+      assert app_value("timeout = inf") == :infinity
+      assert app_value("floor = -inf") == :neg_infinity
     end
 
     test "reveals a Cooper.Secret by default" do
