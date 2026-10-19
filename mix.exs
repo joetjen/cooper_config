@@ -1,7 +1,7 @@
 defmodule CooperConfig.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.5.0"
 
   # `mix precommit` includes `test` as a step; without this, Mix runs
   # the whole alias chain (including `mix test`) in :dev, and `mix test`
@@ -60,7 +60,7 @@ defmodule CooperConfig.MixProject do
       # === RUNTIME ===
       # 0.5 is the first Cooper with `:dotenv_dir` and `:modules`, which
       # this library passes through.
-      {:cooper, "~> 0.5"}
+      {:cooper, "~> 0.6"}
     ]
   end
 
