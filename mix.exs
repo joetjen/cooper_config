@@ -60,7 +60,7 @@ defmodule CooperConfig.MixProject do
       # === RUNTIME ===
       # 0.5 is the first Cooper with `:dotenv_dir` and `:modules`, which
       # this library passes through.
-      {:cooper, "~> 0.5"}
+      {:cooper, "~> 0.6"}
     ]
   end
 

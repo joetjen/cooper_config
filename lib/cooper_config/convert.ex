@@ -16,14 +16,15 @@ defmodule CooperConfig.Convert do
 
   ## Typed literals
 
-  CASC's typed literals are tagged inside a `Cooper` result, and the tag
-  is dropped here, because application configuration is read by code
-  that knows nothing about `Cooper`:
+  CASC's typed literals are values of their own inside a `Cooper`
+  result, and become plain BEAM values here, because application
+  configuration is read by code that knows nothing about `Cooper`:
 
   | CASC | `Cooper` value | application configuration |
   | --- | --- | --- |
-  | `1GiB` | `{:bytes, 1073741824}` | `1073741824` (bytes) |
-  | `14d` | `{:duration, 1209600000000000}` | `1209600000` (milliseconds) |
+  | `1GiB` | `%Cooper.ByteSize{bytes: 1073741824}` | `1073741824` (bytes) |
+  | `14d` | `%Cooper.Duration{nanoseconds: 1209600000000000}` | `1209600000` (milliseconds) |
+  | `inf`, `-inf` | `%Cooper.Infinity{}` | `:infinity`, `:neg_infinity` -- what a `GenServer` timeout takes |
   | `10.0.0.1` | `%Cooper.IPv4{address: {10, 0, 0, 1}}` | `{10, 0, 0, 1}` |
   | `10.0.0.0/8` | `%Cooper.IPv4{address: {10, 0, 0, 0}, prefix: 8}` | `{{10, 0, 0, 0}, 8}` |
 
@@ -123,8 +124,10 @@ defmodule CooperConfig.Convert do
     secret |> Secret.reveal() |> normalize(mode) |> module.new()
   end
 
-  defp normalize({:bytes, bytes}, _mode) when is_integer(bytes), do: bytes
-  defp normalize({:duration, ns}, _mode) when is_integer(ns), do: to_milliseconds(ns)
+  defp normalize(%Cooper.ByteSize{bytes: bytes}, _mode), do: bytes
+  defp normalize(%Cooper.Duration{nanoseconds: ns}, _mode), do: to_milliseconds(ns)
+  defp normalize(%Cooper.Infinity{sign: :positive}, _mode), do: :infinity
+  defp normalize(%Cooper.Infinity{sign: :negative}, _mode), do: :neg_infinity
   defp normalize(%Cooper.IPv4{address: address, prefix: nil}, _mode), do: address
   defp normalize(%Cooper.IPv4{address: address, prefix: prefix}, _mode), do: {address, prefix}
   defp normalize(%Cooper.IPv6{address: address, prefix: nil}, _mode), do: address

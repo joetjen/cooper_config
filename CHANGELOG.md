@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Needs `cooper` 0.6**, where durations, byte sizes and infinity are
+  values of their own (`%Cooper.Duration{}`, `%Cooper.ByteSize{}`,
+  `%Cooper.Infinity{}`). They convert as before -- milliseconds, bytes --
+  and `inf`/`-inf` become `:infinity`/`:neg_infinity`, what a
+  `GenServer` timeout takes.
+
+### Fixed
+
+- **A tuple a document wrote stays a tuple.** `(bytes, 8)` and
+  `(duration, 3)` were taken for a byte size and a duration, because
+  `cooper` held those as `{:bytes, n}` and `{:duration, ns}`.
+
 ## [0.4.0] - 2026-10-08
 
 ### Added
