@@ -74,7 +74,7 @@ needed:
 ```elixir
 def deps do
   [
-    {:cooper_config, "~> 0.3.0"}
+    {:cooper_config, "~> 0.3.1"}
   ]
 end
 ```
@@ -218,4 +218,4 @@ test suite, and Dialyzer, in that order.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache-2.0 — see [LICENSE](LICENSE). Releases before 0.3.1 were MIT.

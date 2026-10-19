@@ -1,7 +1,7 @@
 defmodule CooperConfig.MixProject do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.3.1"
 
   # `mix precommit` includes `test` as a step; without this, Mix runs
   # the whole alias chain (including `mix test`) in :dev, and `mix test`
@@ -63,7 +63,7 @@ defmodule CooperConfig.MixProject do
       # for the earlier `~> 0.3`: option names are validated against a list
       # that includes `:dotenv_override`, which an older Cooper would silently
       # ignore.
-      {:cooper, "~> 0.4"}
+      {:cooper, "~> 0.4.0"}
     ]
   end
 
@@ -90,7 +90,7 @@ defmodule CooperConfig.MixProject do
 
   defp package do
     [
-      licenses: ["MIT"],
+      licenses: ["Apache-2.0"],
       links: %{
         "GitHub" => "https://github.com/joetjen/cooper_config",
         "Docs (main)" => "https://joetjen.github.io/cooper_config/"
