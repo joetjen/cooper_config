@@ -21,6 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `(duration, 3)` were taken for a byte size and a duration, because
   `cooper` held those as `{:bytes, n}` and `{:duration, ns}`.
 
+## [0.4.1] - 2026-10-19
+
+### Fixed
+
+- **Requires `cooper ~> 0.5.0`**, where it said `~> 0.5` -- which in
+  Mix admits every `0.x` from 0.5 on, `cooper` 0.6 included. `cooper`
+  0.6 holds durations, byte sizes and infinity as structs this version
+  does not convert, so the pair loaded without error and handed an
+  application `%Cooper.Duration{}` where it expected milliseconds. A
+  project on `cooper` 0.6 wants `cooper_config` 0.5.
+
 ## [0.4.0] - 2026-10-08
 
 ### Added
@@ -40,6 +51,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Licensed under Apache-2.0 from this release**, replacing MIT --
   Apache 2.0 adds an express patent grant MIT lacks. Releases already
   published stay MIT.
+
+## [0.3.1] - 2026-10-19
+
+### Changed
+
+- **Licensed under Apache-2.0 from this release**, replacing MIT --
+  Apache 2.0 adds an express patent grant MIT lacks. Releases already
+  published stay MIT.
+
+### Fixed
+
+- **Requires `cooper ~> 0.4.0`**, where it said `~> 0.4` -- which in
+  Mix admits every `0.x` from 0.4 on, `cooper` 0.6 included, whose
+  durations, byte sizes and infinity this version does not convert.
+  The pair loaded without error and handed an application
+  `%Cooper.Duration{}` where it expected milliseconds. A project on
+  `cooper` 0.6 wants `cooper_config` 0.5.
 
 ## [0.3.0] - 2026-10-01
 
