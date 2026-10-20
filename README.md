@@ -1,5 +1,11 @@
 # CooperConfig
 
+> [!WARNING]
+> **Under heavy development: not for production use before `1.0.0`.**
+> Things can and will break, and the specification can and will change,
+> between any two releases until `1.0.0`. Do not use this library in a
+> production system yet.
+
 CooperConfig replaces Mix's own config sources (`config/runtime.exs`
 via `Config.Provider` in a release; `config/config.exs`/`Application.
 start/2` outside one) with a
