@@ -80,7 +80,8 @@ defmodule CooperConfig.MixProject do
   end
 
   defp description do
-    "A Config.Provider that loads app config from a CASC file (via Cooper) at " <>
+    "Under heavy development: not for production use before 1.0.0. " <>
+      "A Config.Provider that loads app config from a CASC file (via Cooper) at " <>
       "release boot, replacing Mix's compile-time config.exs/runtime.exs for the " <>
       "settings that need to come from CASC instead."
   end
