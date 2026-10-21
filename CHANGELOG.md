@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-10-21
+
+### Added
+
+- **The README opens with a warning**: under heavy development, not for
+  production use before `1.0.0`. Things can and will break, and the
+  specification can and will change, between any two releases until
+  then. The package description says so too.
+- **HexDocs shows that warning as a warning box.** `mix docs` reads a
+  copy of the README with GitHub's `[!WARNING]` alert turned into
+  ExDoc's own admonition; the README itself is unchanged.
+
 ## [0.5.0] - 2026-10-19
 
 ### Changed
@@ -20,6 +32,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A tuple a document wrote stays a tuple.** `(bytes, 8)` and
   `(duration, 3)` were taken for a byte size and a duration, because
   `cooper` held those as `{:bytes, n}` and `{:duration, ns}`.
+
+## [0.4.1] - 2026-10-19
+
+### Fixed
+
+- **Requires `cooper ~> 0.5.0`**, where it said `~> 0.5` -- which in
+  Mix admits every `0.x` from 0.5 on, `cooper` 0.6 included. `cooper`
+  0.6 holds durations, byte sizes and infinity as structs this version
+  does not convert, so the pair loaded without error and handed an
+  application `%Cooper.Duration{}` where it expected milliseconds. A
+  project on `cooper` 0.6 wants `cooper_config` 0.5.
 
 ## [0.4.0] - 2026-10-08
 
@@ -40,6 +63,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Licensed under Apache-2.0 from this release**, replacing MIT --
   Apache 2.0 adds an express patent grant MIT lacks. Releases already
   published stay MIT.
+
+## [0.3.1] - 2026-10-19
+
+### Changed
+
+- **Licensed under Apache-2.0 from this release**, replacing MIT --
+  Apache 2.0 adds an express patent grant MIT lacks. Releases already
+  published stay MIT.
+
+### Fixed
+
+- **Requires `cooper ~> 0.4.0`**, where it said `~> 0.4` -- which in
+  Mix admits every `0.x` from 0.4 on, `cooper` 0.6 included, whose
+  durations, byte sizes and infinity this version does not convert.
+  The pair loaded without error and handed an application
+  `%Cooper.Duration{}` where it expected milliseconds. A project on
+  `cooper` 0.6 wants `cooper_config` 0.5.
 
 ## [0.3.0] - 2026-10-01
 

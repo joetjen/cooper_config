@@ -1,7 +1,7 @@
 defmodule CooperConfig.MixProject do
   use Mix.Project
 
-  @version "0.5.0"
+  @version "0.5.1"
 
   # `mix precommit` includes `test` as a step; without this, Mix runs
   # the whole alias chain (including `mix test`) in :dev, and `mix test`
@@ -68,6 +68,7 @@ defmodule CooperConfig.MixProject do
   # (slowest, especially its first PLT build) runs last.
   defp aliases do
     [
+      docs: [&readme_for_docs/1, "docs"],
       precommit: [
         "format",
         "compile --warnings-as-errors",
@@ -79,8 +80,23 @@ defmodule CooperConfig.MixProject do
     ]
   end
 
+  # ExDoc can't render GitHub's `> [!WARNING]` alert, so `mix docs` (and
+  # `mix hex.publish`, which builds the docs through it) reads a copy of the
+  # README in `doc_src/` (gitignored) with that line turned into ExDoc's own
+  # warning admonition. The README itself stays as GitHub shows it.
+  defp readme_for_docs(_args) do
+    readme =
+      "README.md"
+      |> File.read!()
+      |> String.replace(~r/^> \[!WARNING\]$/m, "> #### Warning {: .warning}")
+
+    File.mkdir_p!("doc_src")
+    File.write!("doc_src/README.md", readme)
+  end
+
   defp description do
-    "A Config.Provider that loads app config from a CASC file (via Cooper) at " <>
+    "Under heavy development: not for production use before 1.0.0. " <>
+      "A Config.Provider that loads app config from a CASC file (via Cooper) at " <>
       "release boot, replacing Mix's compile-time config.exs/runtime.exs for the " <>
       "settings that need to come from CASC instead."
   end
@@ -107,7 +123,11 @@ defmodule CooperConfig.MixProject do
       source_url: "https://github.com/joetjen/cooper_config",
       source_ref: "v#{@version}",
       canonical: "https://hexdocs.pm/cooper_config",
-      extras: ["README.md", "CHANGELOG.md", "LICENSE"],
+      extras: [
+        {"doc_src/README.md", filename: "readme", source: "README.md"},
+        "CHANGELOG.md",
+        "LICENSE"
+      ],
       groups_for_modules: groups_for_modules()
     ]
   end
